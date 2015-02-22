@@ -1,4 +1,4 @@
-FROM ubuntu:trusty
+FROM phusion/baseimage:0.9.16
 MAINTAINER Kamil Trzciński <ayufan@ayufan.eu>
 
 # Install required dependencies
@@ -6,7 +6,7 @@ RUN apt-get update && \
 	apt-get install -y apt-transport-https locales git make \
 	curl software-properties-common \
 	nginx dnsutils aufs-tools \
-	dpkg-dev openssh-server man-db
+	dpkg-dev man-db
 RUN apt-get install -y apache2-utils
 RUN chmod ugo+s /usr/bin/sudo
 
@@ -21,11 +21,10 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D78692
 	apt-get update && \
 	apt-get install -y lxc-docker
 
-# Install forego
-RUN curl -o /usr/bin/forego https://godist.herokuapp.com/projects/ddollar/forego/releases/current/linux-amd64/forego && chmod +x /usr/bin/forego
-
 # Configure ssh daemon
 RUN sed -i 's/^PermitRootLogin.*/PermitRootLogin yes/g' /etc/ssh/sshd_config
+RUN sed -i 's/^UsePAM.*/UsePAM yes/g' /etc/ssh/sshd_config
+RUN rm -f /etc/service/sshd/down
 
 # Configure volumes
 VOLUME /home/dokku
@@ -37,7 +36,12 @@ WORKDIR /srv/dokku-alt
 RUN sed -i 's/linux-image-extra-virtual, //g' deb/dokku-alt/DEBIAN/control
 RUN make install
 
-EXPOSE 22 80 443
+# Configure daemon
+ADD runit/docker.sh /etc/service/docker/run
+ADD runit/nginx.sh /etc/service/nginx/run
+ADD runit/dokku.sh /etc/service/dokku/run
 
-# Start all services
-CMD ["forego", "start"]
+# Configure startup scripts
+ADD my_init.d/dokku-redeploy.sh /etc/my_init.d/dokku-redeploy.sh
+
+EXPOSE 22 80 443
