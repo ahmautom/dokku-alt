@@ -22,8 +22,7 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D78692
 	apt-get install -y lxc-docker
 
 # Configure ssh daemon
-RUN sed -i 's/^PermitRootLogin.*/PermitRootLogin yes/g' /etc/ssh/sshd_config
-RUN sed -i 's/^UsePAM.*/UsePAM yes/g' /etc/ssh/sshd_config
+RUN sed -i 's/^#UsePAM.*/UsePAM yes/g' /etc/ssh/sshd_config
 RUN rm -f /etc/service/sshd/down
 
 # Configure volumes
